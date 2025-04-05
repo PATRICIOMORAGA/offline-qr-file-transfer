@@ -60,13 +60,6 @@ qr-file-transfer-redteam/
 
 ---
 
-## 🧪 Ejemplo visual
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/12345678/qr-file-transfer-preview.gif" width="600" alt="Demo QR Transfer"/>
-</p>
-
----
 
 ## 📜 Licencia
 
