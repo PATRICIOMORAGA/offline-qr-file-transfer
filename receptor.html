@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Receptor de archivo por QR</title>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      text-align: center;
+      background: #10151a;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 2em 1em;
+    }
+    video {
+      width: 100%;
+      max-width: 600px;
+      border: 2px solid #00ffaa;
+      border-radius: 10px;
+      margin-bottom: 1em;
+    }
+    #status {
+      font-size: 1.1em;
+      margin-bottom: 0.5em;
+      color: #66ffcc;
+    }
+    #progressContainer {
+      width: 90%;
+      max-width: 600px;
+      height: 20px;
+      margin: 0 auto 1em;
+      background: #1e2a30;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: #00ffaa;
+      transition: width 0.3s ease;
+    }
+    #downloadLink {
+      display: none;
+      margin: 1em auto;
+      padding: 0.5em 1em;
+      background: #00aaff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+    }
+    #log {
+      font-size: 0.9em;
+      background: #1e2a30;
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 1em;
+      margin: 1em auto;
+      max-width: 600px;
+      white-space: pre-wrap;
+      text-align: left;
+      color: #b0f0ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Receptor de archivo vía QR (Red Team Edition)</h1>
+  <p id="status">Esperando QR de calibración... Este sistema puede ser usado para exfiltración encubierta de archivos sin red.</p>
+  <div id="progressContainer"><div id="progressBar"></div></div>
+  <video id="video" autoplay muted></video>
+  <a id="downloadLink" download>Descargar archivo</a>
+  <div id="log"></div>
+
+  <script>
+    const status = document.getElementById('status');
+    const downloadLink = document.getElementById('downloadLink');
+    const progressBar = document.getElementById('progressBar');
+    const log = document.getElementById('log');
+
+    let expectedTotal = null;
+    let filename = 'archivo.gz';
+    const chunks = {};
+    const received = new Set();
+
+    function updateProgress() {
+      if (!expectedTotal) return;
+      const percent = Math.floor((received.size / expectedTotal) * 100);
+      progressBar.style.width = percent + '%';
+
+      const missing = [];
+      for (let i = 0; i < expectedTotal; i++) {
+        if (!received.has(i)) missing.push(i);
+      }
+
+      log.textContent = `Recibidos: [${[...received].sort((a, b) => a - b).join(', ')}]\nFaltan: [${missing.join(', ')}]`;
+    }
+
+    function reconstructFile() {
+      const base64 = Array.from({ length: expectedTotal }, (_, i) => chunks[i]).join('');
+      const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+
+      let finalData;
+      try {
+        finalData = filename.endsWith('.gz') ? pako.ungzip(binary) : binary;
+        if (filename.endsWith('.gz')) filename = filename.replace('.gz', '');
+      } catch (error) {
+        alert('Error descomprimiendo el archivo');
+        return;
+      }
+
+      const blob = new Blob([finalData]);
+      const url = URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.download = filename;
+      downloadLink.textContent = `Descargar: ${filename}`;
+      downloadLink.style.display = 'inline-block';
+      status.textContent = 'Archivo reconstruido. Operación completa. Archivo listo para análisis o extracción.';
+    }
+
+    const codeReader = new ZXing.BrowserQRCodeReader();
+
+    codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+      if (!result) return;
+
+      const text = result.getText();
+      try {
+        const payload = JSON.parse(text);
+
+        // QR de calibración (inicia la sesión de recepción segura)
+        if (payload.acknowledged && payload.total) {
+          expectedTotal = payload.total;
+          filename = payload.filename || 'archivo.gz';
+          status.textContent = `Calibración OK: ${filename} (${expectedTotal} fragmentos)`;
+          updateProgress();
+          return;
+        }
+
+        // Fragmento normal (tramo de información codificada en QR)
+        if (payload.i !== undefined && payload.data && payload.total) {
+          const id = Number(payload.i);
+          if (!received.has(id)) {
+            chunks[id] = payload.data;
+            received.add(id);
+            status.textContent = `Fragmento ${id + 1} recibido`;
+            updateProgress();
+          }
+
+          if (received.size === expectedTotal) {
+            reconstructFile();
+          }
+        }
+      } catch (e) {
+        console.warn('QR inválido:', text);
+      }
+    });
+  </script>
+</body>
+</html>
