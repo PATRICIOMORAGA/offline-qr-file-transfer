@@ -1,4 +1,4 @@
-# 🔒 QR File Transfer - Red Team Edition
+# 🔒 Offline QR File Transfer - Red Team Edition
 
 **Transferencia encubierta de archivos sin red utilizando códigos QR.**
 Este proyecto está diseñado para pruebas de penetración, exfiltración de información en sistemas aislados, o canales fuera de banda.
