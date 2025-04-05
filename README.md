@@ -1,7 +1,7 @@
 # 🔒 Offline QR File Transfer - Red Team Edition
 
 **Transferencia encubierta de archivos sin red utilizando códigos QR.**
-Este proyecto está diseñado para pruebas de penetración, exfiltración de información en sistemas aislados, o canales fuera de banda.
+Este proyecto está diseñado para pruebas de penetración, exfiltración de información en sistemas aislados o canales fuera de banda.
 
 ---
 
@@ -19,7 +19,7 @@ Este proyecto está diseñado para pruebas de penetración, exfiltración de inf
 ## 📂 Estructura
 
 ```
-qr-file-transfer-redteam/
+offline-qr-file-transfer/
 ├── emisor.html        # Web que fragmenta y transmite el archivo
 ├── receptor.html      # Receptor web con cámara y reconstrucción
 ├── receptor.py        # Receptor por consola con cámara (OpenCV)
@@ -32,12 +32,19 @@ qr-file-transfer-redteam/
 
 ## 🚀 Cómo usar
 
-### Modo Web (HTML)
+### 🖥 Modo Web (HTML)
+#### Emisor
 1. Abre `emisor.html` en un navegador moderno (Chrome, Firefox).
 2. Selecciona un archivo. Se comprimirá automáticamente.
-3. Apunta la cámara del receptor (otro dispositivo) a los QR que aparecen.
+3. Ajusta el tamaño de fragmento y la velocidad de visualización.
+4. Escanea los códigos QR generados con otro dispositivo usando `receptor.html` o `receptor.py`.
 
-### Modo Consola (Python)
+#### Receptor Web
+1. Abre `receptor.html` en un navegador con cámara (preferentemente desde un PC o laptop).
+2. Escanea el QR de calibración seguido de los fragmentos.
+3. Al completar todos, podrás descargar el archivo reconstruido.
+
+### 🐍 Modo Consola (Python)
 1. Asegúrate de tener Python y dependencias instaladas:
    ```bash
    pip install opencv-python pyzbar
@@ -60,6 +67,11 @@ qr-file-transfer-redteam/
 
 ---
 
+## 🧪 Ejemplo visual
+
+*Puedes añadir una animación o imagen del sistema funcionando aquí si lo subes a GitHub.*
+
+---
 
 ## 📜 Licencia
 
